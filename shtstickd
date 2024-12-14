@@ -1,0 +1,157 @@
+#!/usr/bin/env python3
+#
+# This file is part of the Robotic Observatory Control Kit (rockit)
+#
+# rockit is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# rockit is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with rockit.  If not, see <http://www.gnu.org/licenses/>.
+
+"""Weather station daemon"""
+
+import argparse
+import datetime
+import math
+import re
+import threading
+import time
+import Pyro4
+import serial
+from rockit.common import log
+from rockit.shtstick import Config
+
+SENSOR_REGEX = r'2R0,' \
+    r'Ti=(?P<temperature>-?\d+\.\d)(?P<temperature_status>[C\#]),' \
+    r'Ui=(?P<relative_humidity>\d+\.\d)(?P<relative_humidity_status>[P\#])\r\n'
+
+SENSOR_FIELDS = {
+    'temperature': 'C',
+    'relative_humidity': 'P',
+}
+
+SENSORS = {
+    'temperature': {
+        'label': 'Temperature',
+        'units': '\u00B0C'
+    },
+    'relative_humidity': {
+        'label': 'Rel. Humidity',
+        'units': '%RH'
+    },
+    'dew_point_delta': {
+        'label': 'Temp. > DewPt.',
+        'units': '\u00B0C'
+    }
+}
+
+
+def dew_point(temperature, humidity):
+    """Calculates the dew point using the equation defined by the Vaisala manual"""
+    a = math.log(100 / humidity)
+    b = 15 * a - 2.1 * temperature + 2711.5
+    c = temperature + 273.16
+    return c * b / (c * a / 2 + b) - 273.16
+
+
+class ShtstickDaemon:
+    """Daemon class that wraps the RS232 interface"""
+    def __init__(self, config):
+        self._config = config
+        self._lock = threading.Lock()
+        self._regex = re.compile(SENSOR_REGEX)
+        self._sensors = SENSORS
+        self._latest = None
+
+        threading.Thread(target=self.run, daemon=True).start()
+
+    def run(self):
+        """Main run loop"""
+        port_error = False
+        while True:
+            # Initial setup
+            try:
+                port = serial.Serial(self._config.serial_port, self._config.serial_baud,
+                                     timeout=self._config.serial_timeout)
+                print('Connected to', self._config.serial_port)
+
+                prefix = 'Restored' if port_error else 'Established'
+                log.info(self._config.log_name, prefix + ' connection to shtstick')
+                port_error = False
+            except Exception as exception:
+                if not port_error:
+                    print(exception)
+                    print('Will retry in 10 seconds...')
+                    log.error(self._config.log_name, 'Failed to connect to shtstick')
+
+                port_error = True
+
+                time.sleep(10.)
+                continue
+
+            try:
+                self._latest = None
+
+                # First line may have been only partially received
+                port.readline()
+
+                # Main run loop
+                while True:
+                    data = port.readline().decode('ascii')
+                    match = self._regex.match(data)
+                    if match:
+                        latest = {
+                            'date': datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
+                        }
+
+                        for field, status in SENSOR_FIELDS.items():
+                            latest.update({
+                                field: float(match.group(field)),
+                                field + '_valid': match.group(field + '_status') == status
+                            })
+
+                        dewpt = dew_point(latest['temperature'], latest['relative_humidity'])
+                        latest.update({
+                            'dew_point_delta': round(latest['temperature'] - dewpt, 2),
+                            'dew_point_delta_valid': latest['temperature_valid'] and latest['relative_humidity_valid']
+                        })
+
+                        with self._lock:
+                            self._latest = latest
+            except Exception as exception:
+                port.close()
+                if not port_error:
+                    print(exception)
+                    print('Will retry in 10 seconds...')
+                    log.error(self._config.log_name, 'Lost connection to shtstick')
+                port_error = True
+                time.sleep(10.)
+
+    @Pyro4.expose
+    def last_measurement(self):
+        """Query the latest valid measurement."""
+        with self._lock:
+            return self._latest
+
+    @Pyro4.expose
+    def measurement_sensors(self):
+        """
+        Returns a dictionary of sensor definitions
+        """
+        return self._sensors
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='shtstick Server')
+    parser.add_argument('config', help='Path to configuration json file')
+    args = parser.parse_args()
+
+    _config = Config(args.config)
+    _config.daemon.launch(ShtstickDaemon(_config))

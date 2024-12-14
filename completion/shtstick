@@ -1,0 +1,20 @@
+_shtstick()
+{
+    compopt +o default
+    local cur prev prevprev opts
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    prevprev="${COMP_WORDS[COMP_CWORD-2]}"
+
+    if [[ "${prevprev}" == "shtstick" ]]; then
+        opts="status json"
+    else
+        opts=$(shtstick list-sensors)
+    fi
+
+    COMPREPLY=($(compgen -W "${opts}" -- ${cur}))
+    return 0
+}
+
+complete -F _shtstick shtstick
