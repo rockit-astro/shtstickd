@@ -21,6 +21,9 @@ mkdir -p %{buildroot}%{_udevrulesdir}
 %{__install} %{_sourcedir}/shtstickd@.service %{buildroot}%{_unitdir}
 %{__install} %{_sourcedir}/completion/shtstick %{buildroot}/etc/bash_completion.d/shtstick
 
+%{__install} %{_sourcedir}/config/heliostat.json %{buildroot}%{_sysconfdir}/shtstickd/
+%{__install} %{_sourcedir}/config/10-warwick-shtstick.rules %{buildroot}%{_udevrulesdir}
+
 %package server
 Summary:  Sensor server
 Group:    Unspecified
@@ -43,5 +46,15 @@ Requires: python3-rockit-shtstick
 %defattr(0755,root,root,-)
 %{_bindir}/shtstick
 /etc/bash_completion.d/shtstick
+
+%package data-warwick
+Summary: Sensor data for The Marsh Observatory
+Group:   Unspecified
+%description data-warwick
+
+%files data-warwick
+%defattr(0644,root,root,-)
+%{_sysconfdir}/shtstickd/heliostat.json
+%{_udevrulesdir}/10-warwick-shtstick.rules
 
 %changelog

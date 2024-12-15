@@ -1,0 +1,7 @@
+{
+  "daemon": "warwick_heliostat_shtstick",
+  "log_name": "shtstickd@heliostat",
+  "serial_port": "/dev/shtstick",
+  "serial_baud": 115200,
+  "serial_timeout": 5
+}

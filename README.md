@@ -28,12 +28,12 @@ If the physical serial port or USB adaptors change these should be updated to ma
 
 The automated packaging scripts will push 5 RPM packages to the observatory package repository:
 
-| Package                      | Description                                                                   |
-|------------------------------|-------------------------------------------------------------------------------|
-| rockit-shtstick-server       | Contains the `shtstickd` server and systemd service file.                     |
-| rockit-shtstick-client       | Contains the `shtstick` commandline utility for controlling the server.        |
-| rockit-shtstick-data-warwick | Contains the json configuration and udev rules for the Windmill Hill station. |
-| python3-rockit-shtstick      | Contains the python module with shared code.                                  |
+| Package                      | Description                                                               |
+|------------------------------|---------------------------------------------------------------------------|
+| rockit-shtstick-server       | Contains the `shtstickd` server and systemd service file.                 |
+| rockit-shtstick-client       | Contains the `shtstick` commandline utility for controlling the server.   |
+| rockit-shtstick-data-warwick | Contains the json configuration and udev rules for The Marsh Observatory. |
+| python3-rockit-shtstick      | Contains the python module with shared code.                              |
 
 Alternatively, perform a local installation using `sudo make install`.
 
