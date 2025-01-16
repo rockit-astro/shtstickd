@@ -1,0 +1,7 @@
+{
+  "daemon": "warwick_dome_shtstick",
+  "log_name": "shtstickd@dome",
+  "serial_port": "/dev/shtstick",
+  "serial_baud": 115200,
+  "serial_timeout": 5
+}

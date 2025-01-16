@@ -22,6 +22,7 @@ mkdir -p %{buildroot}%{_udevrulesdir}
 %{__install} %{_sourcedir}/completion/shtstick %{buildroot}/etc/bash_completion.d/shtstick
 
 %{__install} %{_sourcedir}/config/heliostat.json %{buildroot}%{_sysconfdir}/shtstickd/
+%{__install} %{_sourcedir}/config/dome.json %{buildroot}%{_sysconfdir}/shtstickd/
 %{__install} %{_sourcedir}/config/10-warwick-shtstick.rules %{buildroot}%{_udevrulesdir}
 
 %package server
@@ -55,6 +56,7 @@ Group:   Unspecified
 %files data-warwick
 %defattr(0644,root,root,-)
 %{_sysconfdir}/shtstickd/heliostat.json
+%{_sysconfdir}/shtstickd/dome.json
 %{_udevrulesdir}/10-warwick-shtstick.rules
 
 %changelog
