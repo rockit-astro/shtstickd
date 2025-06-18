@@ -1,6 +1,6 @@
 Name:           python3-rockit-shtstick
 Version:        %{_version}
-Release:        1
+Release:        1%{dist}
 License:        GPL3
 Summary:        Common backend code for the shtstick daemons.
 Url:            https://github.com/rockit-astro/shtstickd

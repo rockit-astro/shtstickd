@@ -1,6 +1,6 @@
 Name:      rockit-shtstick
 Version:   %{_version}
-Release:   1
+Release:   1%{dist}
 Summary:   Internal temperature and humidity
 Url:       https://github.com/rockit-astro/shtstickd
 License:   GPL-3.0
