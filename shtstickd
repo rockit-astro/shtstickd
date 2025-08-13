@@ -108,7 +108,7 @@ class ShtstickDaemon:
                     match = self._regex.match(data)
                     if match:
                         latest = {
-                            'date': datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
+                            'date': datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
                         }
 
                         for field, status in SENSOR_FIELDS.items():
